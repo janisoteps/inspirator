@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="main.css">
+  <title>Recipe Inspirator</title>
+</head>
+<body onload="loadFunction()">
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.6/handlebars.min.js'></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.1.4/js.cookie.js"></script>
+  <script src='/client.js'></script>
+  <div id="headerContent" class="collapse">
+    <div class="login-area">
+      <button class="login-btn collapse show">Login</button>
+      <button class="register-btn collapse show">Register</button>
+      <button class="logout-btn collapse">Log Out</button>
+      <button class="profile-btn collapse">Profile</button>
+      <div id="welcome"></div>
+    </div>
+
+    <form class="userForm jumbotron collapse" id='newUser'>
+        <p>Username: <input class="inputField" id='username' type='text'/></p>
+        <p>Password: <input class="inputField" id='pwd' type='password'/></p>
+        <input class="submitButton btn-success" type='submit' value='Register'/>
+    </form>
+    <form class="loginForm jumbotron collapse" id='login'>
+        <p>Username: <input class="inputField" id='loginusername' type='text'/></p>
+        <p>Password: <input class="inputField" id='loginpwd' type='password'/></p>
+        <input class="submitButton btn-success" type='submit' value='Login'/>
+    </form>
+
+    <a href="/"><h1>Recipe Inspirator</h1></a>
+
+    <div class="collapse show" id="gen-button">
+      <button class="generate-btn btn btn-primary">Inspire Me!</button>
+    </div>
+    <div class="collapse" id="control-buttons">
+      <button id="no-button" class="control-btn btn btn-danger">Not this one...</button>
+      <button id="yes-button" class="control-btn btn btn-success">Yes! Let's do it!</button>
+    </div>
+
+    <div class="placeholder collapse show">
+      <h1>Out of ideas?</h1>
+    </div>
+  </div>
+
+  <div id="target" class="collapse show"></div>
+  <div id="loader"></div>
+
+  <script id='recipe-template' type='text/x-handlebars-template'>
+    <div id="mainContent" class='animate-bottom'>
+      <div id="show-recipe" class="jumbotron collapse">
+        <div class="recipe-header">
+          <h2>{{recipe.title}}</h2>
+          <img id="recipe-image" src="{{recipe.image_url}}"/>
+        </div>
+          <ol>
+            {{#if recipe.ingredients}}
+              {{#each recipe.ingredients}}
+                <li>{{this}}</li>
+              {{/each}}
+            {{else}}
+              <h3>Try one more time</h3>
+            {{/if}}
+          </ol>
+        </div>
+      </div>
+    </div>
+  </script>
+
+  <script id='profile-template' type='text/x-handlebars-template'>
+    <div class="profile-container">
+      <h2> Hi, {{username}}!</h2>
+      <div class="well">
+        <h3>Friends:</h3>
+        {{#if friends}}
+          <ul class="list-group">
+            {{#each friends}}
+              <li class="list-group-item">{{friendname}}</li>
+            {{/each}}
+          </ul>
+        {{else}}
+          <h3>No friends added</h3>
+        {{/if}}
+      </div>
+      <div id="addFriend">
+        <button id="profileAddFriends" class="profile-addFriends-btn btn btn-primary">Add Friends</button>
+        <form class="add-friend well collapse" id='addFriendForm'>
+          <h3>Add a friend</h3>
+            Friend Username: <input class="friendSearch" id='friendUsername' type='text'/>
+            <input class="friendFindButton btn-success" type='submit' value='Find'/>
+        </form>
+        <div class="collapse" id="friendSearchResult">
+          <ul class="list-group">
+            <li class="list-group-item"><div id="friendResultLine"></div><button class="btn-success" id="addFriendResult">Add Friend</button></li>
+          </ul>
+        </div>
+        <div id="friendSearchNo" class="collapse"></div>
+        <div id="profileOwnerRecipes" class="jumbotron">
+          <h3>Your Organized Recipes:</h3>
+          {{#if owner}}
+            <ul class="list-group">
+              {{#each owner}}
+                <a href="#"><li id="{{recipeid}}" class="list-group-item profile-owner-line">{{recipename}}</li></a>
+              {{/each}}
+            </ul>
+          {{else}}
+          <p>You haven't organized any recipes</p>
+          {{/if}}
+        </div>
+        <div id="profileFriendRecipes" class="jumbotron">
+          <h3>Recipes You Have Been Invited To:</h3>
+          {{#if recipeFriend}}
+            <ul class="list-group">
+              {{#each recipeFriend}}
+                <a href="#"><li id="{{recipeid}}" class="list-group-item profile-owner-line">{{recipename}}</li></a>
+              {{/each}}
+            </ul>
+          {{else}}
+            <p>You haven't been invited to any recipes</p>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </script>
+
+  <script id='recipePlan-template' type='text/x-handlebars-template'>
+    <div class="well recipe-plan" id="recipePlan">
+      <button class="btn btn-default" id="refreshRecipe" data-recipe="{{_id}}">
+        <span class="glyphicon glyphicon-refresh"></span>
+      </button>
+      <h2>{{title}}</h2>
+      <h4>Organized by {{ownername}}</h4>
+      {{#if friends}}
+        <div class="jumbotron recipe-friends">
+          <p>Friends taking part:</p>
+          {{#each friends}}
+            <p>{{this.friendname}}</p>
+          {{/each}}
+        </div>
+      {{/if}}
+      <button id="recipeAddFriends" class="recipe-addFriends-btn btn btn-primary">Add Friends To Recipe</button>
+      <div class="recipe-friend-pick">
+        <ul class="list-group" id="recipeFriendTarget"></ul>
+      </div>
+      <div class="recipe-header">
+        <img id="recipe-image" src="{{image}}">
+        <a target="_blank" href="{{directions}}"><h3>See The Cooking Directions</h3></a>
+      </div>
+      <h4>Ingredients:</h4>
+      <ol class="list-group" data-recipeid="{{_id}}">
+        {{#each ingredients as |item index|}}
+          <li class="list-group-item"><div class="left-align">{{#if item.done}}<s>{{/if}}{{item.ing}}{{#if item.done}} </s>{{else}}</div><div class="right-align"><button data-item="{{item.ing}}" data-index="{{index}}" id="itemDone">Bought it</button>{{/if}}</div></li>
+        {{/each}}
+      </ol>
+      <div id="recipeChat" class="recipe-chat form-group">
+        <h4>Say Something:</h4>
+        {{#if chat}}
+          <div id="chatContainer">
+            <ul class="list-group" id="chatList">
+              {{#each chat}}
+                <li class="list-group-item"><h4>{{chatuser}} says:</h4> {{chattext}}</li>
+              {{/each}}
+            </ul>
+          </div>
+        {{else}}
+          <h4>Nobody has said anything so far...</h4>
+        {{/if}}
+        <form id="chatBox" data-recipeid="{{_id}}">
+          <input class="chat-submit" type='submit' value='Send'/>
+          <textarea class="form-control chat-input" id="chatInput" type='text'/>
+        </form>
+      </div>
+    </div>
+  </script>
+</body>
+</html>
